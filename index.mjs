@@ -72,7 +72,7 @@ function tick() {
 if(new Date().getTime()>=bazaarPriceDates.endDate) console.log("data gathering done!");
 else tickInterval = setInterval(tick, 60000);
 
-//generateBazaarPriceDates(10000,1684028061598-1681868061598);
+//generateBazaarPriceDates(7500,1728000000);
 
 function generateBazaarPriceDates(n, timespan) {
   const dates = [];
