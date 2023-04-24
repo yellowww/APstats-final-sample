@@ -22,14 +22,14 @@ function getOccourences() {
   return occourences;
 }
 
-// SCHEMA: [price,bytes]
+// SCHEMA: [price,name,lore]
 function getAuctions(occourences) {
   apiRequest("https://api.hypixel.net/skyblock/auctions_ended", (res => {
-        const filtered = [];
-        for(let i=0;i<res.auctions.length;i++) if(res.auction[i].bin) filtered.push([res.auction[i].price,res.auction[i].item_bytes]);
-        for(let i=0;i<occourences;i++)auctions.auctions.push(...filtered);
-        auctions.lastUpdate = new Date().getTime();
-        fs.writeFileSync("./auctions.json",JSON.stringify(auctions), "utf-8");
+        generateSaveStrings(res.auctions, filtered=>{
+          for(let i=0;i<occourences;i++)auctions.auctions.push(...filtered);
+          auctions.lastUpdate = new Date().getTime();
+          fs.writeFileSync("./auctions.json",JSON.stringify(auctions), "utf-8");
+        })
   }));
 }
 
@@ -89,9 +89,24 @@ function generateBazaarPriceDates(n, timespan) {
 }
 
 
+function nbtDecrypt(price, data,cb) {
+  nbt.parse(Buffer.from(data, "base64"), (error,parsed) => {
+    if(error) return console.error(error);
+    cb([price, parsed.value.i.value.value[0].tag.value.display.value.Name.value, parsed.value.i.value.value[0].tag.value.display.value.Lore.value.value.join("\n")])
+  });
+}
 
-// example decryption
-const data = "H4sIAAAAAAAAAEWR3W7TQBCFx2mBxKgtSH2ArUACZKL6L9jtndUYBdHQyGlV7qq1PXZX9U+03kB6yYNw7ffwo/AgiHEC4m7mmz1nz87qACPQhA4A2gAGItUGGjy5qNeV0nTYUzzX4PlNFUvkDzwuUNuD0Uyk+LHgeUOi3zo8S0WzKvjjCPYva4lDoofwsmu9KS95juesaxPDN+GY0FJJrHJ1v4PWxKTDAfGQy4rQB8M2WVKLqqHGy2RdsrKuGoWSPYiiaNjbS/yGBQ3RMo3+TF0Vj+/I5NXWj+2u7Acr0hCbmGbfbdWgd60/5xtmOBM4JPq5p9sofY43W4tfP3+wfyn/++Bfn+91nYJBxS0VlLQoMFGCIvYu6FnvXcenindtMQ++htMT8u11dPH1vWiYUFiyhFcsRiYxq2WO6Qm86NozUkRBFLLl7VU0HcL+F14iHNAg4rRuyYINgg5H4UZJHiglRbxW2AxhVEuRi+qa53CwnF0t7hY30cUsWIbD/jdBj4JP0zC6ozBkul4Teu34Tua7vj124tQduz73xtxOvbGVoZtMbN/xnIyMlSixUbxcwZFln/qn9DX2ue2wxRxgAE93q6b3wR9BYJa/RAIAAA=="
-nbt.parse(Buffer.from(data, "base64"), (error,parsed) => {
-  if(error) return console.error(error);
-})
+
+// SCHEMA: [price, name, lore]
+function generateSaveStrings (items,cb) {
+  for(let i=0;i<items.length;i++) if(items[i].bin) {items.splice(i,1);i--}
+  const total = items.length,compiled=[];
+  let complete = 0;
+  for(let i=0;i<total;i++) {
+    nbtDecrypt(items[i].price, items[i].item_bytes, (res) => {
+      complete++;
+      compiled.push(res);
+      if(complete == total) cb(compiled);
+    });
+  }
+}
