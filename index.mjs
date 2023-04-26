@@ -25,6 +25,7 @@ function getOccourences() {
 // SCHEMA: [price,name,lore]
 function getAuctions(occourences) {
   apiRequest("https://api.hypixel.net/skyblock/auctions_ended", (res => {
+        if(res == undefined) return;
         generateSaveStrings(res.auctions, filtered=>{
           for(let i=0;i<occourences;i++)auctions.auctions.push(...filtered);
           auctions.lastUpdate = new Date().getTime();
@@ -36,6 +37,7 @@ function getAuctions(occourences) {
 // SCHEMA: buy
 function getBazaar(occourences) {
   apiRequest("https://api.hypixel.net/skyblock/bazaar", (res => {
+    if(res == undefined) return;
     const keys = Object.keys(res.products), values = Object.values(res.products);
     for(let i=0;i<keys.length;i++) res.products[keys[i]] = Math.round(values[i].quick_status.buyPrice*1000)/1000;
     for(let i=0;i<occourences;i++) bazaar.push(res);
